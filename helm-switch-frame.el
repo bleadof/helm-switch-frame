@@ -35,30 +35,21 @@
 (require 'dash)
 
 (defun switch-to-frame (frame-name)
-  "Switch to frame, stolen from: http://stackoverflow.com/a/17824173"
-  (let ((frames (frame-list)))
-    (catch 'break
-      (while frames
-        (let ((frame (car frames)))
-          (if (equal (frame-parameter frame 'name) frame-name)
-              (throw 'break (select-frame-set-input-focus frame))
-            (setq frames (cdr frames))))))))
+  (select-frame-set-input-focus (cdr (assoc frame-name (frame-names-with-frame)))))
 
-(cl-defun frame-names (&optional (with (lambda (a) (equal a a))))
-  "List of frame names with optional filter."
+(defun frame-candidate-name (frame)
+  (concat (frame-parameter frame 'window-id) " " (frame-parameter frame 'name)))
+
+(cl-defun frame-names-with-frame (&optional (with 'identity))
+  "List of frame names and associated frame with optional filter."
   (-map (lambda (frame)
-          (frame-parameter frame 'name))
+          `(,(frame-candidate-name frame) . ,frame))
         (-filter with (frame-list))))
-
-
-(defun current-frame-name ()
-  "Return current frame name"
-  (frame-parameter nil 'name))
 
 (defun frame-names-besides-current ()
   "List of frame names, but not the current frame"
-  (frame-names (lambda (frame)
-                 (not (equal frame (selected-frame))))))
+  (-map 'car (frame-names-with-frame (lambda (frame)
+                            (not (equal frame (selected-frame)))))))
 
 (setq helm-frame-source
       `((name . "Switch to frame")
