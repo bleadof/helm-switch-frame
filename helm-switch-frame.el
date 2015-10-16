@@ -44,11 +44,11 @@
               (throw 'break (select-frame-set-input-focus frame))
             (setq frames (cdr frames))))))))
 
-(cl-defun frame-names (&optional (with (lambda (a) (true))))
+(cl-defun frame-names (&optional (with (lambda (a) (equal a a))))
   "List of frame names with optional filter."
-  (-filter with (-map (lambda (frame)
-                        (frame-parameter frame 'name))
-                      (frame-list))))
+  (-map (lambda (frame)
+          (frame-parameter frame 'name))
+        (-filter with (frame-list))))
 
 
 (defun current-frame-name ()
@@ -57,8 +57,8 @@
 
 (defun frame-names-besides-current ()
   "List of frame names, but not the current frame"
-  (frame-names (lambda (frame-name)
-                 (not (eq frame-name (current-frame-name))))))
+  (frame-names (lambda (frame)
+                 (not (equal frame (selected-frame))))))
 
 (setq helm-frame-source
       `((name . "Switch to frame")
