@@ -43,7 +43,7 @@
 (cl-defun frame-names-with-frame (&optional (with 'identity))
   "List of frame names and associated frame with optional filter."
   (-map (lambda (frame)
-          `(,(frame-candidate-name frame) . ,frame))
+          (cons (frame-candidate-name frame) frame))
         (-filter with (frame-list))))
 
 (defun frame-names-besides-current ()
