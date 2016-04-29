@@ -34,28 +34,72 @@
 (require 'helm)
 (require 'dash)
 
-(defun switch-to-frame (frame-name)
+(defun hsf/switch-to-frame (frame-name)
   (select-frame-set-input-focus (cdr (assoc frame-name (frame-names-with-frame)))))
 
-(defun frame-candidate-name (frame)
-  (concat (frame-parameter frame 'window-id) " " (frame-parameter frame 'name)))
+(defun hsf/projectile-root-for-directory (directory)
+  (--some (let* ((cache-key (format "%s-%s" it directory))
+                 (cache-value (gethash cache-key projectile-project-root-cache)))
+            (if cache-value
+                cache-value
+              (funcall it (file-truename directory))))
+          projectile-project-root-files-functions))
 
-(cl-defun frame-names-with-frame (&optional (with 'identity))
+(defun hsf/projectile-project-name-for-project-root (project-root)
+  (file-name-nondirectory (directory-file-name project-root)))
+
+(defun hsf/projectile-project-names-for-frame-buffers (frame)
+  (-map
+   (lambda (buffer)
+     (-when-let (filename
+                 (buffer-file-name buffer))
+       (hsf/projectile-project-name-for-project-root (hsf/projectile-root-for-directory (file-name-directory filename)))))
+   (frame-parameter frame 'buffer-list)))
+
+(defun hsf/projectile-project-name-for-frame (frame)
+  (car
+   (-max-by (-on '> 'length)
+            (-group-by
+             'identity
+             (-filter
+              'identity
+              (hsf/projectile-project-names-for-frame-buffers frame))))))
+
+(defun hsf/first-buffer-name (frame)
+  (-if-let (first-buffer (car (frame-parameter frame 'buffer-list)))
+      (-if-let (filename (buffer-file-name first-buffer))
+          (file-name-nondirectory filename)
+        (buffer-name first-buffer))
+    ""))
+
+(defun hsf/maybe-with-project-name (frame)
+  (let ((buffer-name (hsf/first-buffer-name frame)))
+    (if (boundp 'projectile-mode)
+        (-if-let (project-name (hsf/projectile-project-name-for-frame frame))
+            (format "[%s] %s" project-name buffer-name)
+          buffer-name)
+      buffer-name)))
+
+(defun hsf/frame-candidate-name (frame)
+  (format "[%s] %s" (frame-parameter frame 'window-id) (hsf/maybe-with-project-name frame)))
+
+(cl-defun hsf/frame-names-with-frame (&optional (with 'identity))
   "List of frame names and associated frame with optional filter."
   (-map (lambda (frame)
-          (cons (frame-candidate-name frame) frame))
+          (cons (hsf/frame-candidate-name frame) frame))
         (-filter with (frame-list))))
 
-(defun frame-names-besides-current ()
+(defun hsf/frame-names-besides-current ()
   "List of frame names, but not the current frame"
-  (-map 'car (frame-names-with-frame (lambda (frame)
-                            (not (equal frame (selected-frame)))))))
+  (-map 'car (hsf/frame-names-with-frame
+              (lambda (frame)
+                (not (equal frame (selected-frame)))))))
 
 (setq helm-frame-source
       `((name . "Switch to frame")
-        (candidates . frame-names-besides-current)
+        (candidates . hsf/frame-names-besides-current)
         (action . (lambda (candidate)
-                    (switch-to-frame candidate)))))
+                    (hsf/switch-to-frame candidate)))))
 
 (defun helm-switch-frame ()
   (interactive)
