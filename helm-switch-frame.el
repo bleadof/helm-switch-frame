@@ -35,7 +35,7 @@
 (require 'dash)
 
 (defun hsf/switch-to-frame (frame-name)
-  (select-frame-set-input-focus (cdr (assoc frame-name (frame-names-with-frame)))))
+  (select-frame-set-input-focus (cdr (assoc frame-name (hsf/frame-names-with-frame)))))
 
 (defun hsf/projectile-root-for-directory (directory)
   (--some (let* ((cache-key (format "%s-%s" it directory))
