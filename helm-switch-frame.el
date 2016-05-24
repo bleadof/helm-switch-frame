@@ -48,8 +48,14 @@
 (defun hsf/projectile-project-name-for-project-root (project-root)
   (file-name-nondirectory (directory-file-name project-root)))
 
+(defun hsf/can-resolve-projectile-root-for-buffer (buffer)
+  (and (buffer-file-name buffer)
+       (hsf/projectile-root-for-directory
+        (file-name-directory (buffer-file-name buffer)))))
+
 (defun hsf/projectile-project-names-for-frame-buffers (frame)
-  (-map
+  (-map-when
+   'hsf/can-resolve-projectile-root-for-buffer
    (lambda (buffer)
      (-when-let (filename
                  (buffer-file-name buffer))
