@@ -33,6 +33,7 @@
 
 (require 'helm)
 (require 'dash)
+(require 'dash-functional)
 
 (defun hsf/switch-to-frame (frame-name)
   (select-frame-set-input-focus (cdr (assoc frame-name (hsf/frame-names-with-frame)))))
