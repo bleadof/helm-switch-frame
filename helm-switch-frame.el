@@ -34,17 +34,13 @@
 (require 'helm)
 (require 'dash)
 (require 'dash-functional)
+(require 'projectile)
 
 (defun hsf/switch-to-frame (frame-name)
   (select-frame-set-input-focus (cdr (assoc frame-name (hsf/frame-names-with-frame)))))
 
 (defun hsf/projectile-root-for-directory (directory)
-  (--some (let* ((cache-key (format "%s-%s" it directory))
-                 (cache-value (gethash cache-key projectile-project-root-cache)))
-            (if cache-value
-                cache-value
-              (funcall it (file-truename directory))))
-          projectile-project-root-files-functions))
+  (projectile-project-root directory))
 
 (defun hsf/projectile-project-name-for-project-root (project-root)
   (file-name-nondirectory (directory-file-name project-root)))
