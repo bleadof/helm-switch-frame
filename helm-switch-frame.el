@@ -33,7 +33,6 @@
 
 (require 'helm)
 (require 'dash)
-(require 'dash-functional)
 (require 'projectile)
 
 (defun hsf/switch-to-frame (frame-name)
